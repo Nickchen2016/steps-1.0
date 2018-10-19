@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapView } from 'expo';
-import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import { Text, View, StatusBar } from 'react-native';
 
 export default class Map extends React.Component {
     constructor(props){
@@ -37,7 +37,6 @@ export default class Map extends React.Component {
 
     render() {
         return (
-        // <View style={StyleSheet.container}>
             
             <MapView
             style={{ alignSelf:'stretch', height: 305, width: '100%' }}
@@ -57,17 +56,9 @@ export default class Map extends React.Component {
             title='You are here'
             /> */}
             </MapView>
-        // </View>
         )
     }
 }
-
-// const styles = StyleSheet.create({
-//     container: {
-//       alignItems: 'center',
-//       justifyContent: 'center'
-//     }
-// })
 
 Expo.registerRootComponent(Map);
 

@@ -1,7 +1,6 @@
 import { createStackNavigator } from  'react-navigation';
 import Home from './Component/Home';
 import App from './Component/App';
-// import Map from './Component/Map';
 import { Easing } from 'react-native'
 
 export default RootNavigator = createStackNavigator({
