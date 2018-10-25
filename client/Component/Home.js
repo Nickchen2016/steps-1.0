@@ -1,9 +1,11 @@
 import React from 'react';
 import { Font } from 'expo';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import { connect } from 'react-redux';
+import { fetchData } from '../redux/getData';
 
 
-export default class Home extends React.Component {
+class Home extends React.Component {
 
     constructor(props) {
         super(props);
@@ -14,6 +16,8 @@ export default class Home extends React.Component {
     }
 
     componentDidMount() {
+        //call fetch data
+        this.props.fetchInitialData();
 
         Font.loadAsync({
             'AvenirNextHeavyItalic': require('../../assets/fonts/AvenirNextHeavyItalic.ttf')
@@ -39,14 +43,22 @@ export default class Home extends React.Component {
     render() {
         const { isFontLoaded1, isFontLoaded2 } = this.state;
         return (
-            <View style={styles.container}>
-                <StatusBar hidden={ true }/>
-                <Text style={[styles.font1,isFontLoaded1 && {fontFamily: 'AvenirNextHeavyItalic'}]}>Steps.</Text>
-                <Text style={[styles.font2, isFontLoaded2 && {fontFamily: 'AvenirNextULtltalic'}]}>Step out of your comfort zoom</Text>
-            </View>
+                <View style={styles.container}>
+                    <StatusBar hidden={ true }/>
+                    <Text style={[styles.font1,isFontLoaded1 && {fontFamily: 'AvenirNextHeavyItalic'}]}>Steps.</Text>
+                    <Text style={[styles.font2, isFontLoaded2 && {fontFamily: 'AvenirNextULtltalic'}]}>Step out of your comfort zoom</Text>
+                </View>
         )
     }
 }
+
+const mapState = null;
+
+const mapDispatch = dispatch => ({
+  fetchInitialData: () => {
+	dispatch(fetchData())
+  }
+});
 
 const styles = StyleSheet.create({
     container: {
@@ -70,3 +82,4 @@ const styles = StyleSheet.create({
 });
 
 Expo.registerRootComponent(Home);
+export default connect(mapState, mapDispatch)(Home);

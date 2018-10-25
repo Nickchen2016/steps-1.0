@@ -5,8 +5,13 @@ const WeekSchema = require('../model/schema');
 
 router.post('/', (req,res,next)=>{
     const week = new WeekSchema({
-        createdTime: req.body.createdTime,
-        dates: []
+        createdTime: new Date().getTime(),
+        dates: [
+            {
+                "date": req.body.date,
+                "steps": req.body.steps
+            }
+        ]
     });
     week.save().then(result => {
             console.log(result);
