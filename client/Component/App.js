@@ -1,9 +1,8 @@
 import React from 'react';
-import { MapView, Location,Permissions,LinearGradient,Pedometer,Font } from 'expo';
-import { AsyncStorage, StyleSheet, Text, View, StatusBar, Image } from 'react-native';
+import { Permissions,Pedometer,Font } from 'expo';
+import { AsyncStorage, StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native';
 import { connect } from 'react-redux';
 import { createNewWeek, updateData, removeData } from '../redux/getData';
-import Map from './Map';
 
 class App extends React.Component {
   state = {
@@ -11,7 +10,8 @@ class App extends React.Component {
     isFontLoaded2: false,
     isFontLoaded3: false,
     isPedometerAvailable: "checking",
-    monthDate:'',
+    currentWeekDay:null,
+    currentWeekBest:{},
     pastStepCount: 0,
     currentStepCount: 0
   };
@@ -40,11 +40,16 @@ class App extends React.Component {
       })
     });
     const time = new Date();
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const weekDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const currentWeekDay = weekDays[time.getDay()];
-    const monthDate = months[time.getMonth()]+'/'+time.getDate();
-    this.setState({monthDate});
+    // const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    // const weekDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const currentWeekDay = time.getDay();
+    this.setState({currentWeekDay});
+
+    const currentWeekData = [0,0,0,0,0,0,0];
+    this.props.data&&this.props.data.length>0?this.props.data[this.props.data.length-1].dates.forEach(d=>currentWeekData[d.date]=d.steps):'';
+    const currentweekBestStep = Math.max.apply(null,currentWeekData);
+    const currentWeekBest = {date:currentWeekData.indexOf(currentweekBestStep),step:currentweekBestStep};
+    this.setState({ currentWeekBest })
 
     this._subscribe();
     this.updateData(currentWeekDay);
@@ -54,7 +59,7 @@ class App extends React.Component {
     this._unsubscribe();
   }
 
-//Call redux to update backend DB at midnight
+//Call redux to update DB at midnight
   updateData=(currentWeekDay)=>{
     const time = new Date();
     time.setHours(23,59,59,999);
@@ -69,10 +74,10 @@ class App extends React.Component {
         let totalSteps = 0, data = JSON.parse(result);
         data.steps?totalSteps+=data.steps+data.steps2:totalSteps+=data.steps2;
  
-        if(idArr===2 && currentWeekDay==='Sun'){
+        if(idArr===2 && currentWeekDay===0){
           reduxProps.removeData({id:idArr[0]});
         }
-        if(idArr.length===0 && currentWeekDay==='Sun'){
+        if(idArr.length===0 && currentWeekDay===0){
           reduxProps.createNewWeek({date:currentWeekDay,steps:totalSteps});
         }else{
           reduxProps.updateData({id:idArr[idArr.length-1],date:currentWeekDay,steps:totalSteps});
@@ -83,7 +88,6 @@ class App extends React.Component {
     },milliseconds)
   }
 
- 
 
   _subscribe = () => {
     const end = new Date();
@@ -133,36 +137,67 @@ class App extends React.Component {
   };
 
   render() {
-    // console.log('********', this.props.data)
+    // console.log('********', this.state.currentWeekBest)
     const totalSteps = this.state.currentStepCount+this.state.pastStepCount;
     const { isFontLoaded1, isFontLoaded2, isFontLoaded3 } = this.state;
     return (
       <View style={styles.container}>
         <StatusBar hidden={ true }/>
-        <Map />
-        <LinearGradient colors={['rgba(255,255,255,0)','white','white']} style={styles.gradient}/>
-        <View style={styles.control}>
-            <View style={{height:'20%',width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row'}}>
-                <View style={{height:'100%',width:'56%'}}><Text style={[isFontLoaded1 && {fontFamily:'AvenirNextHeavyCondensed',fontSize:68,color:'#6666FF',textAlign:'right',marginTop:'2%'}]}>{this.state.pastStepCount+this.state.currentStepCount}</Text></View>
-                <View style={{height:'100%',width:'20%'}}><Text style={[isFontLoaded2 && {fontFamily:'AvenirNextULtCondensedItalic',fontSize:36,color:'#6666FF',marginTop:'40%',textAlign:'center'}]}>Steps</Text></View>
-                <View style={{height:'100%',width:'24%'}}><Image style={{marginTop:'-16%'}} source={require('../../assets/walk.jpg')}/></View>
+
+        <View style={styles.chart}>
+            <View style={{height:'70%',width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row',marginTop:'2%',backgroundColor:'grey'}}>
+                
             </View>
-            <View style={{height:'20%',width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row',marginTop:'-7%'}}>
-                <View style={{height:'100%',width:'35%'}}><Text style={[isFontLoaded1 && {fontFamily:'AvenirNextHeavyCondensed',fontSize:68,color:'#6666FF',textAlign:'right'}]}>{((this.state.pastStepCount+this.state.currentStepCount)/2000).toFixed(1)}</Text></View>
-                <View style={{height:'100%',width:'20%'}}><Text style={[isFontLoaded2 && {fontFamily:'AvenirNextULtCondensedItalic',fontSize:36,color:'#6666FF',marginTop:'36%',textAlign:'center'}]}>Miles</Text></View>
-                <View style={{height:'100%',width:'45%'}}><Text style={[isFontLoaded1 && {fontFamily:'AvenirNextHeavyCondensed',fontSize:50,color:'#E6E7E8',textAlign:'left',marginTop:'10%'}]}>{this.state.monthDate}</Text></View>
+            <View style={{height:'30%',width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row',alignItems: 'center'}}>
+                {['S','M','T','W','T','F','S'].map((day,index)=>{
+                  if(this.state.currentWeekBest.step>0&&this.state.currentWeekBest.step>=totalSteps&&this.state.currentWeekBest.date===index){
+                    return(
+                      <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
+                      <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:20}]}> </Text>
+                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
+                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )
+                  }
+                  if(this.state.currentWeekBest.step<totalSteps&&this.state.currentWeekDay===index){
+                    return(
+                      <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
+                        <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:20,marginLeft:'5%'}]}>Today</Text>
+                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
+                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )
+                  }
+                  else if(this.state.currentWeekDay===index&&this.state.currentWeekBest.step>=totalSteps){
+                    return(
+                      <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
+                        <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'#cccccc',fontSize:20,marginLeft:'5%'}]}>Today</Text>
+                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,backgroundColor:'#cccccc',alignItems: 'center',justifyContent: 'center'}}>
+                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )
+                  }else{
+                    return(
+                      <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
+                      <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:20}]}> </Text>
+                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,alignItems: 'center',justifyContent: 'center'}}>
+                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )
+                  }
+                  
+                })}
             </View>
-            <View style={{height:'16%',width:'95%',marginLeft: 'auto',marginRight: 'auto',marginTop:'-4%'}}>
-                <View style={{flexDirection:'row',height:'40%',width:'100%'}}>
-                    <View style={{height:'100%',width:'50%'}}><Text style={[isFontLoaded2 && {fontFamily:'AvenirNextULtCondensedItalic',fontSize:20,color:'#BCBEC0',textAlign:'center'}]}>Previous Week</Text></View>
-                    <View style={{height:'100%',width:'50%'}}><Text style={[isFontLoaded2 && {fontFamily:'AvenirNextULtCondensedItalic',fontSize:20,color:'#6666FF',textAlign:'center'}]}>Current Week</Text></View>
-                </View>
-                <View style={{height:'1%',width:'100%',backgroundColor:'#E6E7E8',marginTop:'-1%'}}></View>
-                <View style={{flexDirection:'row',height:'55%',width:'100%',marginTop:'3%'}}>
-                  <View style={{height:'100%',width:'50%'}}><Text style={[isFontLoaded2 && {fontFamily:'AvenirNextULtCondensedItalic',fontSize:20,color:'#BCBEC0',textAlign:'center'}]}> Steps</Text></View>
-                  <View style={{height:'100%',width:'50%'}}><Text style={[isFontLoaded2 && {fontFamily:'AvenirNextULtCondensedItalic',fontSize:20,color:'#6666FF',textAlign:'center'}]}> Steps</Text></View>
-                </View>
-            </View>
+        </View>
+        <View style={styles.infoBar}>
+
+        </View>
+        <View style={styles.circle}>
+
         </View>
       </View>
     );
@@ -182,21 +217,32 @@ const mapDispatch = dispatch=>({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gradient: {
-    marginTop: '-15%',
-    height: '8%',
+    height: '100%',
     width: '100%', 
     alignItems: 'center',
-    justifyContent: 'center'
+    // justifyContent: 'center',
+    // backgroundColor:'grey'
   },
-  control: {
-    height: '62%',
+  chart: {
+    height: '35%',
+    width: '100%', 
+    alignItems: 'center'
+  },
+  dayIcon: {
+    alignItems: 'center',
+    height:'100%',
+    width:'12%'
+  },
+  infoBar: {
+    height: '10%',
     width: '100%', 
     alignItems: 'center',
-    backgroundColor: 'white'
+    // backgroundColor:'grey'
+  },
+  circle: {
+    height: '55%',
+    width: '100%', 
+    alignItems: 'center'
   }
 });
 

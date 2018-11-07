@@ -5,7 +5,9 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 require('../secret');
 
-const data = require('./api/index')
+const data = require('./api/data');
+const record = require('./api/record');
+
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -20,6 +22,7 @@ app.use(volleyball);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use('/data', data);
+app.use('/record', record);
 
 app.get('/', (req,res)=>{
     res.send('Hello from express');

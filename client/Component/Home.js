@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     },
     font1: {
         fontSize: 90,
-        color: '#3300FF',
+        color: 'black',
         width: '100%',
         textAlign: 'center',
      },
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
          fontSize: 20,
          width: '100%',
          textAlign: 'center',
-         color: '#3300FF'
+         color: 'black'
       }
 });
 
