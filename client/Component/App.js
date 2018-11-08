@@ -1,6 +1,8 @@
 import React from 'react';
 import { Permissions,Pedometer,Font } from 'expo';
 import { AsyncStorage, StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native';
+import ColumnChart from './ColumnChart';
+import Slide from './Slide';
 import { connect } from 'react-redux';
 import { createNewWeek, updateData, removeData } from '../redux/getData';
 
@@ -11,6 +13,8 @@ class App extends React.Component {
     isFontLoaded3: false,
     isPedometerAvailable: "checking",
     currentWeekDay:null,
+    currentWeekData:[0,0,0,0,0,0,0],
+    lastWeekData:[0,0,0,0,0,0,0],
     currentWeekBest:{},
     pastStepCount: 0,
     currentStepCount: 0
@@ -33,30 +37,39 @@ class App extends React.Component {
         })
     });
     Font.loadAsync({
-      'AvenirNextDemiItalic': require('../../assets/fonts/AvenirNextDemiItalic.ttf')
+        'AvenirNextDemiItalic': require('../../assets/fonts/AvenirNextDemiItalic.ttf')
     }).then(()=>{
       this.setState({
           isFontLoaded3: true
       })
     });
     const time = new Date();
-    // const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    // const weekDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const currentWeekDay = time.getDay();
     this.setState({currentWeekDay});
 
-    const currentWeekData = [0,0,0,0,0,0,0];
-    this.props.data&&this.props.data.length>0?this.props.data[this.props.data.length-1].dates.forEach(d=>currentWeekData[d.date]=d.steps):'';
-    const currentweekBestStep = Math.max.apply(null,currentWeekData);
-    const currentWeekBest = {date:currentWeekData.indexOf(currentweekBestStep),step:currentweekBestStep};
-    this.setState({ currentWeekBest })
-
     this._subscribe();
+    this.getWeekData(currentWeekDay);
     this.updateData(currentWeekDay);
   }
 
   componentWillUnmount() {
     this._unsubscribe();
+  }
+
+//Get current and last week's step data
+  getWeekData=(currentWeekDay)=>{
+    const currentWeekData = [0,0,0,0,0,0,0], lastWeekData = [0,0,0,0,0,0,0];
+    AsyncStorage.getItem('data',(err,result)=>{
+      let totalSteps = 0, data = JSON.parse(result);
+      data.steps?totalSteps+=data.steps+data.steps2:totalSteps+=data.steps2;
+
+      this.props.data&&this.props.data.length===2?this.props.data[0].dates.map(d=>lastWeekData[d.date]=d.steps):'';
+      this.props.data&&this.props.data.length>0?this.props.data[this.props.data.length-1].dates.map(d=>currentWeekData[d.date]=d.steps):'';
+      currentWeekData[currentWeekDay]=totalSteps;
+      const currentweekBestStep = Math.max.apply(null,currentWeekData);
+      const currentWeekBest = {date:currentWeekData.indexOf(currentweekBestStep),step:currentweekBestStep};
+      this.setState({ currentWeekBest,currentWeekData,lastWeekData })
+    })
   }
 
 //Call redux to update DB at midnight
@@ -66,7 +79,7 @@ class App extends React.Component {
     const milliseconds = time.getTime()-new Date().getTime();
     const MILLISECONDS_IN_A_DAY = 86400000;
     const idArr = [];
-    this.props.data&&this.props.data.forEach(week=>idArr.push(week._id));
+    this.props.data&&this.props.data.map(week=>idArr.push(week._id));
     let reduxProps = this.props;
 
     let postAtMidNight = setTimeout(function tick(){
@@ -137,7 +150,7 @@ class App extends React.Component {
   };
 
   render() {
-    // console.log('********', this.state.currentWeekBest)
+    // console.log('********', this.state.currentWeekBest,this.state.currentWeekData,this.state.lastWeekData)
     const totalSteps = this.state.currentStepCount+this.state.pastStepCount;
     const { isFontLoaded1, isFontLoaded2, isFontLoaded3 } = this.state;
     return (
@@ -145,17 +158,17 @@ class App extends React.Component {
         <StatusBar hidden={ true }/>
 
         <View style={styles.chart}>
-            <View style={{height:'70%',width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row',marginTop:'2%',backgroundColor:'grey'}}>
-                
+            <View style={{height:'72%',width:'80%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row'}}>
+                <ColumnChart lastWeekData={this.state.lastWeekData} currentWeekData={this.state.currentWeekData}/>
             </View>
-            <View style={{height:'30%',width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row',alignItems: 'center'}}>
+            <View style={{height:70,width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row',alignItems: 'center', marginTop:'2%'}}>
                 {['S','M','T','W','T','F','S'].map((day,index)=>{
                   if(this.state.currentWeekBest.step>0&&this.state.currentWeekBest.step>=totalSteps&&this.state.currentWeekBest.date===index){
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
-                      <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:20}]}> </Text>
-                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
-                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                      <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:18}]}> </Text>
+                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
+                          <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
                     )
@@ -163,9 +176,9 @@ class App extends React.Component {
                   if(this.state.currentWeekBest.step<totalSteps&&this.state.currentWeekDay===index){
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
-                        <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:20,marginLeft:'5%'}]}>Today</Text>
-                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
-                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                        <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:18,marginLeft:'5%'}]}>Today</Text>
+                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
+                          <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
                     )
@@ -173,28 +186,31 @@ class App extends React.Component {
                   else if(this.state.currentWeekDay===index&&this.state.currentWeekBest.step>=totalSteps){
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
-                        <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'#cccccc',fontSize:20,marginLeft:'5%'}]}>Today</Text>
-                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,backgroundColor:'#cccccc',alignItems: 'center',justifyContent: 'center'}}>
-                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                        <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'#cccccc',fontSize:18,alignItems: 'center',justifyContent: 'center'}]}>Today</Text>
+                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'#cccccc',alignItems: 'center',justifyContent: 'center'}}>
+                          <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
                     )
                   }else{
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
-                      <Text key={index+1} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:20}]}> </Text>
-                        <TouchableOpacity key={index} style={{height:'40%',width:'65%',borderRadius:100,alignItems: 'center',justifyContent: 'center'}}>
-                          <Text key={index} style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:20,marginTop:'20%'}]}>{day}</Text>
+                      <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:18}]}> </Text>
+                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,alignItems: 'center',justifyContent: 'center'}}>
+                          <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
                     )
                   }
-                  
                 })}
             </View>
         </View>
         <View style={styles.infoBar}>
-
+            <View style={styles.line}></View>
+            <View style={{height:'98%',width:'100%'}}>
+                <Slide/>
+            </View>
+            <View style={styles.line}></View>
         </View>
         <View style={styles.circle}>
 
@@ -203,6 +219,7 @@ class App extends React.Component {
     );
   }
 }
+
 
 const mapState = state => {
   return {
@@ -219,14 +236,14 @@ const styles = StyleSheet.create({
   container: {
     height: '100%',
     width: '100%', 
-    alignItems: 'center',
-    // justifyContent: 'center',
-    // backgroundColor:'grey'
+    alignItems: 'center'
   },
   chart: {
-    height: '35%',
+    height: 250,
+    // backgroundColor:'red',
     width: '100%', 
-    alignItems: 'center'
+    alignItems: 'center',
+    marginTop:'2%'
   },
   dayIcon: {
     alignItems: 'center',
@@ -234,10 +251,12 @@ const styles = StyleSheet.create({
     width:'12%'
   },
   infoBar: {
-    height: '10%',
-    width: '100%', 
-    alignItems: 'center',
-    // backgroundColor:'grey'
+    height: 70,
+    width: '100%', marginTop:'2%',
+    alignItems: 'center'
+  },
+  line: {
+    height:.6,width:'90%',backgroundColor:'black'
   },
   circle: {
     height: '55%',
