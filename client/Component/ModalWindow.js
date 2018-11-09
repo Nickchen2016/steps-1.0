@@ -4,6 +4,7 @@ import { Font } from 'expo';
 import Modal from 'react-native-modal';
 import MedalSrc from './MedalSrc';
 import { connect } from 'react-redux';
+import { patchRecord } from '../redux/getRecord';
 
 class ModalWindow extends React.Component {
     constructor(props) {
@@ -33,8 +34,9 @@ class ModalWindow extends React.Component {
     }
 
     componentWillReceiveProps(nextProps){
-        if(nextProps.todaySteps>=1220){
+        if(nextProps.todaySteps===nextProps.currentGoal){
             this._toggleModal();
+            this.props.patchRecord({ id:this.props.record._id,data:nextProps.todaySteps });
         }
     }
 
@@ -71,6 +73,9 @@ class ModalWindow extends React.Component {
 const mapState = state =>{
     return {record: state.getRecord}
 }
+const mapDispatch = dispatch =>({
+    patchRecord: (data)=> dispatch(patchRecord(data))
+})
 
 const styles = StyleSheet.create({
     container: {
@@ -88,4 +93,4 @@ const styles = StyleSheet.create({
     }
 })
 
-export default connect(mapState)(ModalWindow);
+export default connect(mapState,mapDispatch)(ModalWindow);

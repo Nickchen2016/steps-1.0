@@ -1,5 +1,5 @@
 import React from 'react';
-import { Permissions,Pedometer,Font } from 'expo';
+import { Pedometer,Font } from 'expo';
 import { AsyncStorage, StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native';
 import ColumnChart from './ColumnChart';
 import Slide from './Slide';
@@ -7,6 +7,7 @@ import CircularChart from './CircularChart';
 import ModalWindow from './ModalWindow';
 import { connect } from 'react-redux';
 import { createNewWeek, updateData, removeData } from '../redux/getData';
+import { postRecord,patchRecord } from '../redux/getRecord';
 
 class App extends React.Component {
   state = {
@@ -91,13 +92,19 @@ class App extends React.Component {
         let totalSteps = 0, data = JSON.parse(result);
         data.steps?totalSteps+=data.steps+data.steps2:totalSteps+=data.steps2;
  
-        if(idArr===2 && currentWeekDay===0){
+        if(idArr.length>=2 && currentWeekDay===0){
           reduxProps.removeData({id:idArr[0]});
         }
-        if(idArr.length===0 && currentWeekDay===0){
+        if(idArr.length===0&&Object.key(reduxProps.record).length===0){
+          reduxProps.postRecord({ data:totalSteps })
+        }
+        if(idArr.length===0 || currentWeekDay===0){
           reduxProps.createNewWeek({date:currentWeekDay,steps:totalSteps});
         }else{
           reduxProps.updateData({id:idArr[idArr.length-1],date:currentWeekDay,steps:totalSteps});
+          if(totalSteps>reduxProps.record.data){
+            reduxProps.patchRecord({ id:reduxProps.record._id,data:totalSteps })
+          }
         }
       });
       
@@ -234,7 +241,7 @@ class App extends React.Component {
             <View style={styles.line}></View>
         </View>
         <View style={styles.circle}>
-            <CircularChart />
+            <CircularChart todaySteps={totalSteps} currentGoal={this.state.currentGoal}/>
         </View>
       </View>
     );
@@ -251,7 +258,9 @@ const mapState = state => {
 const mapDispatch = dispatch=>({
   createNewWeek: (credentials)=> dispatch(createNewWeek(credentials)),
   updateData: (credentials)=> dispatch(updateData(credentials)),
-  removeData: (id)=> dispatch(removeData(id))
+  removeData: (id)=> dispatch(removeData(id)),
+  postRecord: (data)=> dispatch(postRecord(data)),
+  patchRecord: (data)=> dispatch(patchRecord(data))
 });
 
 const styles = StyleSheet.create({
