@@ -43,7 +43,6 @@ class ModalWindow extends React.Component {
     }
 
     render() {
-        console.log('         ',this.props.todaySteps,this.state.isModalVisible);
         const { isFontLoaded1,isFontLoaded3 } = this.state;
         return(
             <View style={styles.container} >
