@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 //Initial State
-const initialState = {};
+const initialState = [];
 
 //common url
 const url = 'http://192.168.1.2:5000/data';

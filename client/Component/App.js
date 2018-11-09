@@ -3,6 +3,8 @@ import { Permissions,Pedometer,Font } from 'expo';
 import { AsyncStorage, StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native';
 import ColumnChart from './ColumnChart';
 import Slide from './Slide';
+import CircularChart from './CircularChart';
+import ModalWindow from './ModalWindow';
 import { connect } from 'react-redux';
 import { createNewWeek, updateData, removeData } from '../redux/getData';
 
@@ -17,7 +19,8 @@ class App extends React.Component {
     lastWeekData:[0,0,0,0,0,0,0],
     currentWeekBest:{},
     pastStepCount: 0,
-    currentStepCount: 0
+    currentStepCount: 0,
+    currentGoal:0
   };
 
   componentDidMount() {
@@ -50,6 +53,7 @@ class App extends React.Component {
     this._subscribe();
     this.getWeekData(currentWeekDay);
     this.updateData(currentWeekDay);
+    this.getCurrentGoal();
   }
 
   componentWillUnmount() {
@@ -101,6 +105,17 @@ class App extends React.Component {
     },milliseconds)
   }
 
+//Get the next step goal
+  getCurrentGoal = ()=> {
+    let currentGoal = 0;
+    if(this.props.record.data&&this.props.record.data.toString().length>4){
+        currentGoal+=(Number(this.props.record.data.toString()[0])+1)*10000;
+        this.setState({ currentGoal });
+    }else{
+        currentGoal+=10000;
+        this.setState({ currentGoal });
+    }
+}
 
   _subscribe = () => {
     const end = new Date();
@@ -150,16 +165,22 @@ class App extends React.Component {
   };
 
   render() {
-    // console.log('********', this.state.currentWeekBest,this.state.currentWeekData,this.state.lastWeekData)
+    // console.log('********', this.state.currentWeekData)
     const totalSteps = this.state.currentStepCount+this.state.pastStepCount;
     const { isFontLoaded1, isFontLoaded2, isFontLoaded3 } = this.state;
     return (
       <View style={styles.container}>
         <StatusBar hidden={ true }/>
 
+        <View>
+          <ModalWindow 
+          currentGoal={this.state.currentGoal} 
+          todaySteps={totalSteps}
+          />
+        </View>
         <View style={styles.chart}>
             <View style={{height:'72%',width:'80%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row'}}>
-                <ColumnChart lastWeekData={this.state.lastWeekData} currentWeekData={this.state.currentWeekData}/>
+                <ColumnChart lastWeekData={this.state.lastWeekData} currentWeekData={this.state.currentWeekData} currentWeekBest={this.state.currentWeekBest} currentGoal={this.state.currentGoal}/>
             </View>
             <View style={{height:70,width:'95%',marginLeft: 'auto',marginRight: 'auto',flexDirection:'row',alignItems: 'center', marginTop:'2%'}}>
                 {['S','M','T','W','T','F','S'].map((day,index)=>{
@@ -167,7 +188,7 @@ class App extends React.Component {
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
                       <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:18}]}> </Text>
-                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
+                        <TouchableOpacity activeOpacity={1} style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
                           <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
@@ -177,7 +198,7 @@ class App extends React.Component {
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
                         <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:18,marginLeft:'5%'}]}>Today</Text>
-                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
+                        <TouchableOpacity activeOpacity={1} style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'black',alignItems: 'center',justifyContent: 'center'}}>
                           <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'white',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
@@ -187,7 +208,7 @@ class App extends React.Component {
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
                         <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'#cccccc',fontSize:18,alignItems: 'center',justifyContent: 'center'}]}>Today</Text>
-                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'#cccccc',alignItems: 'center',justifyContent: 'center'}}>
+                        <TouchableOpacity activeOpacity={1} style={{height:'38%',width:'65%',borderRadius:100,backgroundColor:'#cccccc',alignItems: 'center',justifyContent: 'center'}}>
                           <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
@@ -196,7 +217,7 @@ class App extends React.Component {
                     return(
                       <View key={index} style={[styles.dayIcon,{marginLeft: index===0?'8%':'0%'}]}>
                       <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',fontSize:18}]}> </Text>
-                        <TouchableOpacity style={{height:'38%',width:'65%',borderRadius:100,alignItems: 'center',justifyContent: 'center'}}>
+                        <TouchableOpacity activeOpacity={1} style={{height:'38%',width:'65%',borderRadius:100,alignItems: 'center',justifyContent: 'center'}}>
                           <Text style={[isFontLoaded3&&{fontFamily:'AvenirNextDemiItalic',color:'black',fontSize:18,marginTop:'20%'}]}>{day}</Text>
                         </TouchableOpacity>
                       </View>
@@ -208,12 +229,12 @@ class App extends React.Component {
         <View style={styles.infoBar}>
             <View style={styles.line}></View>
             <View style={{height:'98%',width:'100%'}}>
-                <Slide/>
+                <Slide currentWeekData={this.state.currentWeekData} todaySteps={totalSteps} currentGoal={this.state.currentGoal}/>
             </View>
             <View style={styles.line}></View>
         </View>
         <View style={styles.circle}>
-
+            <CircularChart />
         </View>
       </View>
     );
@@ -223,7 +244,8 @@ class App extends React.Component {
 
 const mapState = state => {
   return {
-    data: state
+    data: state.getData,
+    record: state.getRecord
   }
 };
 const mapDispatch = dispatch=>({
@@ -252,7 +274,7 @@ const styles = StyleSheet.create({
   },
   infoBar: {
     height: 70,
-    width: '100%', marginTop:'2%',
+    width: '100%',
     alignItems: 'center'
   },
   line: {

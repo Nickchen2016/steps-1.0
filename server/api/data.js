@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const WeekSchema = require('../model/schema');
+const WeekSchema = require('../model/dataSchema');
 
 
 router.post('/', (req,res,next)=>{

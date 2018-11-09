@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const RecordSchema = require('../model/record');
+const RecordSchema = require('../model/recordSchema');
 const time = new Date();
 const date = time.getMonth()+'/'+time.getDate()+'/'+time.getFullYear();
 
@@ -24,7 +24,7 @@ router.get('/', (req,res,next)=>{
     .exec()
     .then(result=>{
         console.log(result);
-        res.status(500).json(result);
+        res.status(200).json(result);
     })
     .catch(err=>{
         console.log(err);

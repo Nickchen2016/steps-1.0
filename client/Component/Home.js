@@ -3,6 +3,7 @@ import { Font } from 'expo';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
 import { connect } from 'react-redux';
 import { fetchData } from '../redux/getData';
+import { fetchRecord } from '../redux/getRecord';
 
 
 class Home extends React.Component {
@@ -18,6 +19,7 @@ class Home extends React.Component {
     componentDidMount() {
         //call fetch data
         this.props.fetchInitialData();
+        this.props.fetchInitialRecord();
 
         Font.loadAsync({
             'AvenirNextHeavyItalic': require('../../assets/fonts/AvenirNextHeavyItalic.ttf')
@@ -56,7 +58,10 @@ const mapState = null;
 
 const mapDispatch = dispatch => ({
   fetchInitialData: () => {
-	dispatch(fetchData())
+    dispatch(fetchData())
+  },
+  fetchInitialRecord: () => {
+    dispatch(fetchRecord())
   }
 });
 
