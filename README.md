@@ -1,4 +1,4 @@
-# <img src='./public/img/logo.png' width='240'/>
+# <img src='./assets/logo.png' width='240'/>
 
 ## Why Create
 Too many pedometer app with ads...
@@ -18,7 +18,7 @@ Coming soon!
 
 
 ## Interface Sample
-<img src='./public/img/sample1.png'/>
+<img src='./assets/sample1.png'/>
 
 ## Key Featrues
 (1). Instant view of your steps data<br/>
