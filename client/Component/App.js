@@ -271,10 +271,9 @@ const styles = StyleSheet.create({
   },
   chart: {
     height: 250,
-    // backgroundColor:'red',
     width: '100%', 
     alignItems: 'center',
-    marginTop:'2%'
+    marginTop:'1%'
   },
   dayIcon: {
     alignItems: 'center',
@@ -284,7 +283,8 @@ const styles = StyleSheet.create({
   infoBar: {
     height: 70,
     width: '100%',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginTop: '1%'
   },
   line: {
     height:.6,width:'90%',backgroundColor:'black'
